@@ -1,7 +1,6 @@
 export class Start extends Phaser.Scene {
     constructor() {
         super('Start');
-        // Carrega o valor salvo ou define 0 se for a primeira vez
         const savedScore = localStorage.getItem('zombieScore');
         this.score = savedScore ? parseInt(savedScore) : 0;
     }
@@ -21,7 +20,7 @@ export class Start extends Phaser.Scene {
         const { width, height } = this.scale;
         const trainWidth = 3840;
 
-        // 1. Fundo (TileSprite)
+        // 1. Fundo
         this.background = this.add.tileSprite(0, 0, width, height, 'background')
             .setOrigin(0, 0)
             .setScrollFactor(0)
@@ -74,8 +73,6 @@ export class Start extends Phaser.Scene {
 
         // 4. Grupos e UI
         this.zombies = this.physics.add.group();
-        
-        // CORREÇÃO: Apenas uma instância do scoreText
         this.scoreText = this.add.text(50, 50, `Zombies: ${this.score}`, {
             fontSize: '60px',
             fill: '#ff0000',
@@ -126,36 +123,37 @@ export class Start extends Phaser.Scene {
         // 6. Colisão
         this.physics.add.overlap(this.hitbox, this.zombies, (hitbox, zombie) => {
             if (!zombie.active) return;
-
             const blood = this.physics.add.sprite(zombie.x, zombie.y, 'bloodSplatter').setScale(2);
             blood.setDepth(1);
             blood.play('blood_anim');
             blood.setVelocityX(-this.bgSpeed * 60);
-
             zombie.destroy();
             this.score += 1;
             this.scoreText.setText(`Zombies: ${this.score}`);
-            
-            // Grava no LocalStorage
             localStorage.setItem('zombieScore', this.score);
-
             this.time.delayedCall(2000, () => blood.destroy());
         });
 
-        // 7. Câmera
+        // 7. Controles (Teclado + Toque)
         this.cameras.main.setBounds(0, 0, trainWidth, height);
         this.cameras.main.scrollX = trainWidth - width;
         this.cursors = this.input.keyboard.createCursorKeys();
+        
+        // Ativa o pointer (mouse/touch)
+        this.pointer = this.input.activePointer;
 
         this.bgSpeed = 15;
         this.camSpeed = 25;
     }
 
     update() {
+        const { width } = this.scale;
         this.background.tilePositionX += this.bgSpeed;
-        if (this.cursors.right.isDown) {
+
+        // Movimentação (Teclado OU Touch)
+        if (this.cursors.right.isDown || (this.pointer.isDown && this.pointer.x > width / 2)) {
             this.cameras.main.scrollX += this.camSpeed;
-        } else if (this.cursors.left.isDown) {
+        } else if (this.cursors.left.isDown || (this.pointer.isDown && this.pointer.x < width / 2)) {
             this.cameras.main.scrollX -= this.camSpeed;
         }
 
