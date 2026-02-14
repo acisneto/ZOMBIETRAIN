@@ -106,26 +106,33 @@ export class Start extends Phaser.Scene {
         z.play(`zombie${type}_walk`).setVelocity(vx, vy);
     }
 
-    update() {
+update() {
         this.background.tilePositionX += this.bgSpeed;
 
-        // LÓGICA DE MOVIMENTO (Teclado + Swipe)
+        // 1. Movimento por Teclado
         if (this.cursors.right.isDown) {
             this.cameras.main.scrollX += this.camSpeed;
         } else if (this.cursors.left.isDown) {
             this.cameras.main.scrollX -= this.camSpeed;
         }
 
-        // Lógica de Swipe / Drag
-        if (this.input.activePointer.isDown) {
-            // Calcula a distância que o mouse/dedo se moveu desde o último frame
-            const dragX = (this.input.activePointer.prevPosition.x - this.input.activePointer.position.x);
+        // 2. Lógica de Swipe / Drag Corrigida
+        const pointer = this.input.activePointer;
+
+        // Verificamos se o pointer está pressionado E se ele já se moveu desde o toque inicial
+        if (pointer.isDown && pointer.getDistanceX() !== 0) {
             
-            // Move a câmera baseado no arrasto
-            this.cameras.main.scrollX += dragX * this.swipeSensitivity;
+            // Calculamos a diferença apenas entre a posição ATUAL e a ANTERIOR do frame
+            // Usamos um multiplicador menor (1.0) para evitar o efeito de "teleporte"
+            const dragX = pointer.prevPosition.x - pointer.position.x;
+            
+            // Só aplicamos o movimento se o deslocamento for real (não o salto inicial)
+            if (Math.abs(dragX) < 100) { // Filtro para ignorar saltos bruscos do primeiro toque
+                this.cameras.main.scrollX += dragX * this.swipeSensitivity;
+            }
         }
 
-        // Y-Sorting e Limpeza
+        // ... (resto do seu código de Y-Sorting e Limpeza)
         this.zombies.children.iterate(z => {
             if (z && z.active) z.setDepth(z.y);
         });
