@@ -7,12 +7,17 @@ export class Start extends Phaser.Scene {
 
     constructor() {
         super('Start');
+        this.habitacionalCostResources = 0;
+        this.habitacionalCostBones = 0;
+        this.habitacionalPurchased = false;
 
         const savedScore = localStorage.getItem('zombieScore');
         this.score = savedScore ? parseInt(savedScore) : 0;
 
         this.bones = 0;
         this.lastBoneThreshold = 0;
+        this.resources = 0;
+        this.lastResourceThreshold = 0;
 
         this.maxTrainLife = 1500;
         this.trainLife = 1500;
@@ -25,8 +30,10 @@ export class Start extends Phaser.Scene {
 
         this.boneMultiplier = 1;
 
-this.boneUpgradeCost = 10;
-this.reinforceCost = 25;
+        this.boneUpgradeCost = 10;
+        this.reinforceCost = 25;
+        this.survivors = 4;
+this.maxSurvivors = 12; // ship1 default
 
 
     }
@@ -34,6 +41,8 @@ this.reinforceCost = 25;
     preload() {
         this.load.image('background', 'assets/bgteste.png');
         this.load.image('ship', 'assets/spaceship.png');
+        this.load.image('ship2', 'assets/spaceship2.png');
+this.load.image('bgtres', 'assets/bgtres(stationone).png');
 
         this.load.spritesheet('wheels', 'assets/wheel.png', {
             frameWidth: 90,
@@ -108,21 +117,21 @@ this.reinforceCost = 25;
                 .setDepth(6000)
                 .setInteractive({ useHandCursor: true });
 
-const text = this.add.text(
-    x + buttonWidth / 2,
-    y + buttonHeight / 2,
-    label,
-    {
-        fontSize: '18px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        align: 'center',
-        wordWrap: { width: buttonWidth - 20 }
-    }
-)
-.setOrigin(0.5)
-.setScrollFactor(0)
-.setDepth(6001);
+            const text = this.add.text(
+                x + buttonWidth / 2,
+                y + buttonHeight / 2,
+                label,
+                {
+                    fontSize: '18px',
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    align: 'center',
+                    wordWrap: { width: buttonWidth - 20 }
+                }
+            )
+                .setOrigin(0.5)
+                .setScrollFactor(0)
+                .setDepth(6001);
 
 
             bg.on('pointerdown', (pointer, lx, ly, event) => {
@@ -141,70 +150,70 @@ const text = this.add.text(
             // BOTÃO REFORÇAR
             if (btnData.name === 'Reforçar Integridade') {
 
-const btn = createButton(
-    x,
-    y,
-    `Reforçar Integridade\n(${this.reinforceCost})`,
-    COLOR_DARK,
-    () => {
+                const btn = createButton(
+                    x,
+                    y,
+                    `Reforçar Integridade\n(${this.reinforceCost})`,
+                    COLOR_DARK,
+                    () => {
 
-        if (this.bones < this.reinforceCost || this.gameOver) return;
+                        if (this.bones < this.reinforceCost || this.gameOver) return;
 
-        this.bones -= this.reinforceCost;
-        this.bonesText.setText(`Ossadas: ${this.bones}`);
+                        this.bones -= this.reinforceCost;
+                        this.bonesText.setText(`Ossadas: ${this.bones}`);
 
-        this.trainLife = Phaser.Math.Clamp(
-            this.trainLife + 100,
-            0,
-            this.maxTrainLife
-        );
+                        this.trainLife = Phaser.Math.Clamp(
+                            this.trainLife + 100,
+                            0,
+                            this.maxTrainLife
+                        );
 
-        // aumenta custo 10%
-        this.reinforceCost = Math.floor(this.reinforceCost * 1.10);
+                        // aumenta custo 10%
+                        this.reinforceCost = Math.floor(this.reinforceCost * 1.10);
 
-        btn.text.setText(
-            `Reforçar Integridade\n(${this.reinforceCost})`
-        );
+                        btn.text.setText(
+                            `Reforçar Integridade\n(${this.reinforceCost})`
+                        );
 
-        this.updateReinforceState();
-    }
-);
+                        this.updateReinforceState();
+                    }
+                );
 
 
                 this.reinforceButton = btn.bg;
 
-this.updateReinforceState = () => {
+                this.updateReinforceState = () => {
 
-    if (!this.reinforceButton) return;
+                    if (!this.reinforceButton) return;
 
-    if (this.bones < this.reinforceCost) {
+                    if (this.bones < this.reinforceCost) {
 
-        this.reinforceButton.disableInteractive();
-        this.reinforceButton.setFillStyle(0x555555);
+                        this.reinforceButton.disableInteractive();
+                        this.reinforceButton.setFillStyle(0x555555);
 
-    } else {
+                    } else {
 
-        this.reinforceButton.setInteractive();
-        this.reinforceButton.setFillStyle(COLOR_DARK);
-    }
-};
-this.updateBoneUpgradeState = () => {
+                        this.reinforceButton.setInteractive();
+                        this.reinforceButton.setFillStyle(COLOR_DARK);
+                    }
+                };
+                this.updateBoneUpgradeState = () => {
 
-    if (!this.boneUpgradeButton) return;
-    if (!this.boneUpgradeButton.scene) return; // ← important
-    if (!this.boneUpgradeButton.active) return;
+                    if (!this.boneUpgradeButton) return;
+                    if (!this.boneUpgradeButton.scene) return; // ← important
+                    if (!this.boneUpgradeButton.active) return;
 
-    if (this.bones < this.boneUpgradeCost) {
+                    if (this.bones < this.boneUpgradeCost) {
 
-        this.boneUpgradeButton.disableInteractive();
-        this.boneUpgradeButton.setFillStyle(0x555555);
+                        this.boneUpgradeButton.disableInteractive();
+                        this.boneUpgradeButton.setFillStyle(0x555555);
 
-    } else {
+                    } else {
 
-        this.boneUpgradeButton.setInteractive({ useHandCursor: true });
-        this.boneUpgradeButton.setFillStyle(COLOR_PRIMARY);
-    }
-};
+                        this.boneUpgradeButton.setInteractive({ useHandCursor: true });
+                        this.boneUpgradeButton.setFillStyle(COLOR_PRIMARY);
+                    }
+                };
 
 
 
@@ -229,61 +238,119 @@ this.updateBoneUpgradeState = () => {
                 this.activeParent = btnData.name;
                 this.activeSubmenu = [];
 
-btnData.children.forEach((child, i) => {
+                btnData.children.forEach((child, i) => {
 
-    const subY =
-        y + buttonHeight +
-        verticalSpacing +
-        i * (buttonHeight + verticalSpacing);
+                    const subY =
+                        y + buttonHeight +
+                        verticalSpacing +
+                        i * (buttonHeight + verticalSpacing);
 
-    let label = child;
+                    let label = child;
 
-    if (child === '+0.25x Ossadas') {
-        label = `${child}\n(${this.boneUpgradeCost})`;
-    }
+                    if (child === 'Habitacional') {
+                        label =
+                            `Habitacional\n(${this.habitacionalCostResources}R / ${this.habitacionalCostBones}O)`;
+                    }
 
-    const subBtn = createButton(
-        x,
-        subY,
-        label,
-        COLOR_PRIMARY,
-        () => {
 
-            if (child === '+0.25x Ossadas') {
+                    if (child === '+0.25x Ossadas') {
+                        label = `${child}\n(${this.boneUpgradeCost})`;
+                    }
 
-                if (this.bones < this.boneUpgradeCost) return;
+                    const subBtn = createButton(
+                        x,
+                        subY,
+                        label,
+                        COLOR_PRIMARY,
+                        () => {
+                            {
 
-                this.bones -= this.boneUpgradeCost;
-                this.bonesText.setText(`Ossadas: ${this.bones}`);
+                                // =============================
+                                // +0.25x OSSADAS
+                                // =============================
+                                if (child === '+0.25x Ossadas') {
 
-                // aumenta multiplicador
-                this.boneMultiplier += 0.25;
+                                    if (this.bones < this.boneUpgradeCost) return;
 
-                // aumenta custo em 10%
-                this.boneUpgradeCost = Math.floor(this.boneUpgradeCost * 1.10);
+                                    this.bones -= this.boneUpgradeCost;
+                                    this.bonesText.setText(`Ossadas: ${this.bones}`);
 
-                // atualiza texto do botão
-                subBtn.text.setText(
-                    `+0.25x Ossadas\n(${this.boneUpgradeCost})`
-                );
-            }
+                                    this.boneMultiplier += 0.25;
 
-       if (this.updateReinforceState)
-    this.updateReinforceState();
+                                    this.boneUpgradeCost = Math.floor(this.boneUpgradeCost * 1.10);
 
-if (this.updateBoneUpgradeState)
-    this.updateBoneUpgradeState();
+                                    subBtn.text.setText(
+                                        `+0.25x Ossadas\n(${this.boneUpgradeCost})`
+                                    );
+                                }
 
-        }
-        
-    );
-if (child === '+0.25x Ossadas') {
-    this.boneUpgradeButton = subBtn.bg;
-}
-this.updateBoneUpgradeState();
+                                // =============================
+                                // HABITACIONAL
+                                // =============================
+                                if (child === 'Habitacional') {
 
-    this.activeSubmenu.push(subBtn.bg, subBtn.text);
-});
+                                    if (this.habitacionalPurchased) return;
+
+                                    // Pay cost (free for testing is fine)
+                                    this.resources -= this.habitacionalCostResources;
+                                    this.bones -= this.habitacionalCostBones;
+
+                                    this.resourcesText.setText(`Recursos: ${this.resources}`);
+                                    this.bonesText.setText(`Ossadas: ${this.bones}`);
+
+                                    // Change sprite
+                                    this.ship.setTexture('ship2');
+this.maxSurvivors = 16;
+this.survivorsText.setText(
+    `Sobreviventes: ${this.survivors} (${this.maxSurvivors - this.survivors} vagas)`
+);
+
+
+                                    // Move slightly left
+                                    this.ship.x -= 250;
+                                    // New wheel layout for ship2
+                                    this.createWheels([
+                                        80,
+                                        560,
+                                        850,
+                                        1420,
+                                        1710,
+                                        2280,
+                                        2560,
+                                        3060
+                                    ]);
+
+                                    // Expand hitbox
+                                    this.hitbox.body.setSize(3100, 50);
+                                    this.hitbox.x -= 480
+
+                                    this.habitacionalPurchased = true;
+
+                                    subBtn.bg.disableInteractive();
+                                    subBtn.bg.setFillStyle(0x444444);
+                                }
+
+                                if (this.updateReinforceState)
+                                    this.updateReinforceState();
+
+                                if (this.updateBoneUpgradeState)
+                                    this.updateBoneUpgradeState();
+                            }
+                        }
+
+                    );
+                    if (child === '+0.25x Ossadas') {
+                        this.boneUpgradeButton = subBtn.bg;
+                    }
+                    this.updateBoneUpgradeState();
+
+                    this.activeSubmenu.push(subBtn.bg, subBtn.text);
+
+
+
+
+
+                });
 
             });
         });
@@ -301,23 +368,19 @@ this.updateBoneUpgradeState();
         // TREM + HITBOX
         // =============================
 
-this.train = this.add.container(400, height / 2).setDepth(10);
+        this.train = this.add.container(400, height / 2).setDepth(10);
 
-// ---- WHEELS FIRST ----
-const wheelPositions = [935, 1420, 1710, 2280, 2560, 3060];
+        // ---- WHEELS FIRST ----
+        this.wheels = [];
 
-wheelPositions.forEach(xPos => {
-    const wheel = this.add.sprite(xPos, 40, 'wheels')
-        .play('spin');
+        this.createWheels([935, 1420, 1710, 2280, 2560, 3060]);
 
-    this.train.add(wheel);
-});
 
-// ---- SHIP AFTER ----
-this.ship = this.add.image(0, 0, 'ship')
-    .setOrigin(0, 0.5);
+        // ---- SHIP AFTER ----
+        this.ship = this.add.image(0, 0, 'ship')
+            .setOrigin(0, 0.5);
 
-this.train.add(this.ship);
+        this.train.add(this.ship);
 
 
         this.hitbox = this.add.zone(2400, height / 2.5, 2183, 50);
@@ -332,46 +395,61 @@ this.train.add(this.ship);
             fontSize: '30px',
             fill: '#ff0000'
         }).setScrollFactor(0);
-
+this.survivorsText = this.add.text(
+    50,
+    170,
+    `Sobreviventes: ${this.survivors} (${this.maxSurvivors - this.survivors} vagas)`,
+    {
+        fontSize: '30px',
+        fill: '#ffffff'
+    }
+).setScrollFactor(0);
         this.bonesText = this.add.text(50, 90, `Ossadas: ${this.bones}`, {
             fontSize: '30px',
             fill: '#ffffff'
         }).setScrollFactor(0);
+        this.resourcesText = this.add.text(50, 130, `Recursos: ${this.resources}`, {
+            fontSize: '30px',
+            fill: '#ffffff'
+        }).setScrollFactor(0);
+
+
+
 
         // VIDA
-// =============================
-// LIFE BAR (TOP CENTER ABOVE BUTTONS)
-// =============================
+        // =============================
+        // LIFE BAR (TOP CENTER ABOVE BUTTONS)
+        // =============================
 
-this.lifeBarWidth = 500;
-this.lifeBarHeight = 20;
+        this.lifeBarWidth = 500;
+        this.lifeBarHeight = 20;
 
-const lifeBarY = 20; // top of screen
-const lifeBarX = (width - this.lifeBarWidth) / 2;
+        const lifeBarY = 20; // top of screen
+        const lifeBarX = (width - this.lifeBarWidth) / 2;
 
-// Background (grey)
-this.lifeBarBg = this.add.rectangle(
-    lifeBarX,
-    lifeBarY,
-    this.lifeBarWidth,
-    this.lifeBarHeight,
-    0x555555
-)
-.setOrigin(0)
-.setScrollFactor(0)
-.setDepth(7000);
+        // Background (grey)
+        this.lifeBarBg = this.add.rectangle(
+            lifeBarX,
+            lifeBarY,
+            this.lifeBarWidth,
+            this.lifeBarHeight,
+            0x555555
+        )
+            .setOrigin(0)
+            .setScrollFactor(0)
+            .setDepth(7000);
 
-// Fill (white)
-this.lifeBar = this.add.rectangle(
-    lifeBarX,
-    lifeBarY,
-    this.lifeBarWidth,
-    this.lifeBarHeight,
-    0xffffff
-)
-.setOrigin(0)
-.setScrollFactor(0)
-.setDepth(7001);
+        // Fill (white)
+        this.lifeBar = this.add.rectangle(
+            lifeBarX,
+            lifeBarY,
+            this.lifeBarWidth,
+            this.lifeBarHeight,
+            0xffffff
+        )
+            .setOrigin(0)
+            .setScrollFactor(0)
+            .setDepth(7001);
 
 
         // OVERLAP
@@ -389,22 +467,42 @@ this.lifeBar = this.add.rectangle(
             this.cameras.main.shake(20, 0.01);
 
             const currentThreshold = Math.floor(this.score / 25);
+            // =============================
+            // RECURSOS (a cada 30 kills)
+            // =============================
+
+            const resourceThreshold = Math.floor(this.score / 30);
+
+            if (resourceThreshold > this.lastResourceThreshold) {
+
+                const gainedResources =
+                    (resourceThreshold - this.lastResourceThreshold) * 5;
+
+                this.resources += gainedResources;
+
+                this.resourcesText.setText(
+                    `Recursos: ${this.resources}`
+                );
+
+                this.lastResourceThreshold = resourceThreshold;
+            }
+
             if (currentThreshold > this.lastBoneThreshold) {
                 const baseReward = 10;
-const gained =
-    (currentThreshold - this.lastBoneThreshold) *
-    baseReward *
-    this.boneMultiplier;
+                const gained =
+                    (currentThreshold - this.lastBoneThreshold) *
+                    baseReward *
+                    this.boneMultiplier;
 
                 this.bones += gained;
                 this.bonesText.setText(`Ossadas: ${this.bones}`);
                 this.lastBoneThreshold = currentThreshold;
 
-          if (this.updateReinforceState)
-    this.updateReinforceState();
+                if (this.updateReinforceState)
+                    this.updateReinforceState();
 
-if (this.updateBoneUpgradeState)
-    this.updateBoneUpgradeState();
+                if (this.updateBoneUpgradeState)
+                    this.updateBoneUpgradeState();
 
             }
 
@@ -422,150 +520,185 @@ if (this.updateBoneUpgradeState)
         this.cameras.main.scrollX = trainWidth - width;
 
         // =============================
-// CONTROLE DE CÂMERA COMPLETO
+        // CONTROLE DE CÂMERA COMPLETO
+        // =============================
+
+        this.camSpeed = 25;
+        this.dragSensitivity = 1.2;
+
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.cameraStartX = 0;
+
+        // Permitir múltiplos toques
+        this.input.addPointer(2);
+
+        // -----------------------------
+        // TECLADO
+        // -----------------------------
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keys = this.input.keyboard.addKeys({
+            A: Phaser.Input.Keyboard.KeyCodes.A,
+            D: Phaser.Input.Keyboard.KeyCodes.D
+        });
+
+        // -----------------------------
+        // MOUSE / TOUCH START
+        // -----------------------------
+        this.input.on('pointerdown', (pointer, currentlyOver) => {
+
+            // Se clicou em UI, não arrasta
+            if (currentlyOver.length > 0) return;
+
+            this.isDragging = true;
+            this.dragStartX = pointer.x;
+            this.cameraStartX = this.cameras.main.scrollX;
+        });
+
+        // -----------------------------
+        // MOUSE / TOUCH MOVE
+        // -----------------------------
+        this.input.on('pointermove', (pointer) => {
+
+            if (!this.isDragging) return;
+
+            const dragDistance =
+                (pointer.x - this.dragStartX) * this.dragSensitivity;
+
+            this.cameras.main.scrollX =
+                this.cameraStartX - dragDistance;
+
+            this.clampCamera();
+        });
+
+        // -----------------------------
+        // SOLTAR
+        // -----------------------------
+        this.input.on('pointerup', () => {
+            this.isDragging = false;
+        });
+
+// =============================
+// STATION TIMER (90s)
 // =============================
 
-this.camSpeed = 25;
-this.dragSensitivity = 1.2;
+this.stationActive = false;
 
-this.isDragging = false;
-this.dragStartX = 0;
-this.cameraStartX = 0;
-
-// Permitir múltiplos toques
-this.input.addPointer(2);
-
-// -----------------------------
-// TECLADO
-// -----------------------------
-this.cursors = this.input.keyboard.createCursorKeys();
-this.keys = this.input.keyboard.addKeys({
-    A: Phaser.Input.Keyboard.KeyCodes.A,
-    D: Phaser.Input.Keyboard.KeyCodes.D
+this.time.addEvent({
+    delay: 90000,
+    callback: () => this.triggerStation(),
+    loop: true
 });
 
-// -----------------------------
-// MOUSE / TOUCH START
-// -----------------------------
-this.input.on('pointerdown', (pointer, currentlyOver) => {
-
-    // Se clicou em UI, não arrasta
-    if (currentlyOver.length > 0) return;
-
-    this.isDragging = true;
-    this.dragStartX = pointer.x;
-    this.cameraStartX = this.cameras.main.scrollX;
-});
-
-// -----------------------------
-// MOUSE / TOUCH MOVE
-// -----------------------------
-this.input.on('pointermove', (pointer) => {
-
-    if (!this.isDragging) return;
-
-    const dragDistance =
-        (pointer.x - this.dragStartX) * this.dragSensitivity;
-
-    this.cameras.main.scrollX =
-        this.cameraStartX - dragDistance;
-
-    this.clampCamera();
-});
-
-// -----------------------------
-// SOLTAR
-// -----------------------------
-this.input.on('pointerup', () => {
-    this.isDragging = false;
-});
 
     }
-clampCamera() {
 
-    const cam = this.cameras.main;
-    const maxScroll =
-        this.cameras.main.getBounds().width -
-        this.scale.width;
+    createWheels(positions) {
 
-    cam.scrollX = Phaser.Math.Clamp(
-        cam.scrollX,
-        0,
-        maxScroll
-    );
-}
+        // Remove old wheels
+        if (this.wheels) {
+            this.wheels.forEach(w => w.destroy());
+        }
 
-spawnZombie() {
+        this.wheels = [];
 
-    if (this.gameOver) return;
+        positions.forEach(xPos => {
 
-    const { width, height } = this.scale;
-    const cam = this.cameras.main;
+            const wheel = this.add.sprite(xPos, 40, 'wheels')
+                .play('spin');
 
-    const side = Phaser.Math.Between(0, 3);
-
-    let x, y, vx = 0, vy = 0;
-
-    // -----------------------------
-    // DIREITA
-    // -----------------------------
-    if (side === 0) {
-
-        x = cam.scrollX + width + 100;
-        y = Phaser.Math.Between(0, height);
-
-        vx = -300;
+            this.train.add(wheel);
+            this.wheels.push(wheel);
+        });
     }
 
-    // -----------------------------
-    // ESQUERDA
-    // -----------------------------
-    else if (side === 1) {
 
-        x = cam.scrollX - 100;
-        y = Phaser.Math.Between(0, height);
+    clampCamera() {
 
-        vx = 300;
-    }
+        const cam = this.cameras.main;
+        const maxScroll =
+            this.cameras.main.getBounds().width -
+            this.scale.width;
 
-    // -----------------------------
-    // TOPO (NOVO)
-    // -----------------------------
-    else if (side === 2) {
-
-        x = Phaser.Math.Between(
+        cam.scrollX = Phaser.Math.Clamp(
             cam.scrollX,
-            cam.scrollX + width
+            0,
+            maxScroll
         );
-
-        y = -100;
-
-        vy = 300;
     }
 
-    // -----------------------------
-    // BASE (opcional já incluso)
-    // -----------------------------
-    else {
+    spawnZombie() {
 
-        x = Phaser.Math.Between(
-            cam.scrollX,
-            cam.scrollX + width
-        );
+        if (this.gameOver || this.stationActive) return;
 
-        y = height + 100;
 
-        vy = -300;
+        const { width, height } = this.scale;
+        const cam = this.cameras.main;
+
+        const side = Phaser.Math.Between(0, 3);
+
+        let x, y, vx = 0, vy = 0;
+
+        // -----------------------------
+        // DIREITA
+        // -----------------------------
+        if (side === 0) {
+
+            x = cam.scrollX + width + 100;
+            y = Phaser.Math.Between(0, height);
+
+            vx = -300;
+        }
+
+        // -----------------------------
+        // ESQUERDA
+        // -----------------------------
+        else if (side === 1) {
+
+            x = cam.scrollX - 100;
+            y = Phaser.Math.Between(0, height);
+
+            vx = 300;
+        }
+
+        // -----------------------------
+        // TOPO (NOVO)
+        // -----------------------------
+        else if (side === 2) {
+
+            x = Phaser.Math.Between(
+                cam.scrollX,
+                cam.scrollX + width
+            );
+
+            y = -100;
+
+            vy = 300;
+        }
+
+        // -----------------------------
+        // BASE (opcional já incluso)
+        // -----------------------------
+        else {
+
+            x = Phaser.Math.Between(
+                cam.scrollX,
+                cam.scrollX + width
+            );
+
+            y = height + 100;
+
+            vy = -300;
+        }
+
+        const type = Phaser.Math.Between(1, 4);
+
+        const z = this.zombies.create(x, y, `zombie${type}walking`);
+
+        z.play(`zombie${type}_walk`);
+
+        z.setVelocity(vx, vy);
     }
-
-    const type = Phaser.Math.Between(1, 4);
-
-    const z = this.zombies.create(x, y, `zombie${type}walking`);
-
-    z.play(`zombie${type}_walk`);
-
-    z.setVelocity(vx, vy);
-}
 
     triggerGameOver() {
         this.gameOver = true;
@@ -578,48 +711,200 @@ spawnZombie() {
             { fontSize: '60px', color: '#ff0000' }
         ).setOrigin(0.5).setScrollFactor(0);
     }
+triggerStation() {
 
-   update() {
+    if (this.stationActive || this.gameOver) return;
 
-    if (this.gameOver) return;
+    this.stationActive = true;
 
-    this.background.tilePositionX += this.bgSpeed;
+    // Despawn zombies
+    this.zombies.clear(true, true);
 
-    // -----------------------------
-    // TECLADO
-    // -----------------------------
+    // Change background
+    this.background.setTexture('bgtres');
+    this.bgSpeed = 0;
 
-    if (this.cursors.right.isDown || this.keys.D.isDown) {
-        this.cameras.main.scrollX += this.camSpeed;
-    }
+    this.tweens.add({
+        targets: this.background,
+        tilePositionX: this.background.tilePositionX + 2000,
+        duration: 4000,
+        ease: 'Linear',
+        onComplete: () => {
 
-    if (this.cursors.left.isDown || this.keys.A.isDown) {
-        this.cameras.main.scrollX -= this.camSpeed;
-    }
+            this.physics.pause();
+            this.time.paused = true;
 
-    this.clampCamera();
-
-    // -----------------------------
-    // VIDA
-    // -----------------------------
-
-    if (this.trainLife < this.maxTrainLife)
-        this.trainLife += 0.02;
-
-    this.displayLife = Phaser.Math.Linear(
-        this.displayLife,
-        this.trainLife,
-        0.05
-    );
-
-    const ratio = Phaser.Math.Clamp(
-        this.displayLife / this.maxTrainLife,
-        0,
-        1
-    );
-
-    this.lifeBar.width = this.lifeBarWidth * ratio;
-
+            this.showStationPopup();
+        }
+    });
 }
+
+showStationPopup() {
+
+    const { width, height } = this.scale;
+
+    // Random survivors offer (1–5)
+    const offer = Phaser.Math.Between(1, 5);
+
+    const availableSpace = this.maxSurvivors - this.survivors;
+
+    const finalOffer = Math.min(offer, availableSpace);
+
+    const overlay = this.add.rectangle(
+        width / 2,
+        height / 2,
+        width,
+        height,
+        0x000000,
+        0.6
+    ).setScrollFactor(0).setDepth(10000);
+
+    const popup = this.add.rectangle(
+        width / 2,
+        height / 2,
+        650,
+        350,
+        0x222222
+    ).setScrollFactor(0).setDepth(10001);
+
+    let message;
+
+    if (availableSpace <= 0) {
+        message = "ESTAÇÃO ALCANÇADA\n\nO trem está lotado.\nNenhum sobrevivente pode entrar.";
+    } else {
+        message = `ESTAÇÃO ALCANÇADA\n\n${finalOffer} sobreviventes querem entrar.\nEspaço disponível: ${availableSpace}`;
+    }
+
+    const text = this.add.text(
+        width / 2,
+        height / 2 - 40,
+        message,
+        {
+            fontSize: '28px',
+            color: '#ffffff',
+            align: 'center',
+            wordWrap: { width: 600 }
+        }
+    )
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(10002);
+
+    // ACCEPT BUTTON
+    const acceptBtn = this.add.text(
+        width / 2 - 120,
+        height / 2 + 100,
+        "ACEITAR",
+        {
+            fontSize: '26px',
+            backgroundColor: '#00aa00',
+            padding: { x: 20, y: 10 }
+        }
+    )
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true })
+        .setScrollFactor(0)
+        .setDepth(10002);
+
+    // DECLINE BUTTON
+    const declineBtn = this.add.text(
+        width / 2 + 120,
+        height / 2 + 100,
+        "RECUSAR",
+        {
+            fontSize: '26px',
+            backgroundColor: '#aa0000',
+            padding: { x: 20, y: 10 }
+        }
+    )
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true })
+        .setScrollFactor(0)
+        .setDepth(10002);
+
+    // If no space, disable accept
+    if (availableSpace <= 0) {
+        acceptBtn.disableInteractive();
+        acceptBtn.setAlpha(0.5);
+    }
+
+    acceptBtn.on('pointerdown', () => {
+
+        if (availableSpace > 0) {
+            this.survivors += finalOffer;
+            this.survivorsText.setText(
+    `Sobreviventes: ${this.survivors} (${this.maxSurvivors - this.survivors} vagas)`
+);
+
+        }
+
+        closePopup();
+    });
+
+    declineBtn.on('pointerdown', () => {
+        closePopup();
+    });
+
+    const closePopup = () => {
+
+        overlay.destroy();
+        popup.destroy();
+        text.destroy();
+        acceptBtn.destroy();
+        declineBtn.destroy();
+
+        this.physics.resume();
+        this.time.paused = false;
+
+        this.background.setTexture('background');
+        this.bgSpeed = 15;
+
+        this.stationActive = false;
+    };
+}
+
+
+    update() {
+
+        if (this.gameOver) return;
+
+        this.background.tilePositionX += this.bgSpeed;
+
+        // -----------------------------
+        // TECLADO
+        // -----------------------------
+
+        if (this.cursors.right.isDown || this.keys.D.isDown) {
+            this.cameras.main.scrollX += this.camSpeed;
+        }
+
+        if (this.cursors.left.isDown || this.keys.A.isDown) {
+            this.cameras.main.scrollX -= this.camSpeed;
+        }
+
+        this.clampCamera();
+
+        // -----------------------------
+        // VIDA
+        // -----------------------------
+
+        if (this.trainLife < this.maxTrainLife)
+            this.trainLife += 0.02;
+
+        this.displayLife = Phaser.Math.Linear(
+            this.displayLife,
+            this.trainLife,
+            0.05
+        );
+
+        const ratio = Phaser.Math.Clamp(
+            this.displayLife / this.maxTrainLife,
+            0,
+            1
+        );
+
+        this.lifeBar.width = this.lifeBarWidth * ratio;
+
+    }
 
 }
