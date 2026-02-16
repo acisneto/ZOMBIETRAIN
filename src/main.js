@@ -15,6 +15,10 @@ const config = {
             debug: true
         }
     },
+    parent: 'game-container',
+    dom: {
+        createContainer: true
+    },
     scene: [Start],
     scale: {
         mode: Phaser.Scale.FIT,
